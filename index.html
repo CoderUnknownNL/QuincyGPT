@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuincyPT</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #fef9f0 0%, #f0f7ff 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1rem;
+  }
+  .chat-wrapper {
+    width: 100%;
+    max-width: 720px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid #e8e0f5;
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    max-height: 820px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(120,80,200,0.08);
+  }
+  .chat-header {
+    padding: 1.1rem 1.5rem;
+    background: linear-gradient(90deg, #6c3fc5 0%, #3a7bd5 100%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .header-avatar {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.5);
+    background: #fff;
+  }
+  .header-avatar svg { width: 100%; height: 100%; }
+  .header-text h1 { font-size: 17px; font-weight: 700; color: #fff; }
+  .header-text p { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 2px; }
+  .status-dot { width: 7px; height: 7px; background: #7fffb0; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .msg { display: flex; gap: 10px; }
+  .msg.user { flex-direction: row-reverse; }
+  .msg .bubble {
+    max-width: 80%;
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #1a1a2e;
+  }
+  .msg.bot .bubble {
+    background: #f7f4ff;
+    border: 1px solid #e8e0f5;
+    border-radius: 4px 14px 14px 14px;
+  }
+  .msg.bot .bubble p { margin-bottom: 0.6em; }
+  .msg.bot .bubble p:last-child { margin-bottom: 0; }
+  .msg.user .bubble {
+    background: linear-gradient(135deg, #6c3fc5, #3a7bd5);
+    color: #fff;
+    border-radius: 14px 4px 14px 14px;
+  }
+  .mini-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    align-self: flex-end;
+    background: #fff;
+    border: 1px solid #e0d8f5;
+  }
+  .mini-avatar svg { width: 100%; height: 100%; }
+  .mini-avatar.user-av {
+    background: linear-gradient(135deg, #9b7de0, #5a9ee0);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff;
+    overflow: hidden; border: none;
+  }
+  .suggestions {
+    padding: 0 1.5rem 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .suggestion-btn {
+    background: #fff;
+    border: 1px solid #d0c4ee;
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    color: #6c3fc5;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    text-align: left;
+  }
+  .suggestion-btn:hover { background: #f7f4ff; border-color: #6c3fc5; }
+  .contact-bar {
+    background: #f7f4ff;
+    border-top: 1px solid #e8e0f5;
+    padding: 0.7rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .contact-bar span { font-size: 13px; color: #7c5cbf; font-weight: 500; flex: 1; }
+  .contact-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(90deg, #6c3fc5, #3a7bd5);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .contact-btn:hover { opacity: 0.85; }
+  .input-area {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e8e0f5;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: #fafafe;
+    flex-shrink: 0;
+  }
+  .input-area textarea {
+    flex: 1;
+    border: 1px solid #d0c4ee;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    line-height: 1.5;
+    max-height: 120px;
+    overflow-y: auto;
+    color: #1a1a2e;
+    background: #fff;
+  }
+  .input-area textarea:focus { border-color: #6c3fc5; }
+  .send-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6c3fc5, #3a7bd5);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  .send-btn:hover { opacity: 0.85; }
+  .send-btn svg { fill: #fff; }
+  .typing { display: flex; gap: 4px; align-items: center; padding: 4px 2px; }
+  .typing span { width: 7px; height: 7px; background: #9b7de0; border-radius: 50%; animation: bounce 1.2s infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+  .disclaimer { font-size: 11px; color: #b0a8c8; text-align: center; padding: 0.5rem 1.5rem 0.6rem; background: #fafafe; flex-shrink: 0; }
+  @media (max-width: 480px) { .chat-wrapper { height: 100vh; border-radius: 0; } body { padding: 0; } }
+</style>
+</head>
+<body>
+<div class="chat-wrapper">
+  <div class="chat-header">
+    <div class="header-avatar" id="headerAv"></div>
+    <div class="header-text">
+      <h1>QuincyPT ✨</h1>
+      <p><span class="status-dot"></span>AI-assistent van Quincy Ommel</p>
+    </div>
+  </div>
+
+  <div class="messages" id="messages"></div>
+  <div class="suggestions" id="suggestions"></div>
+
+  <div class="input-area">
+    <textarea id="userInput" placeholder="Stel een vraag over Quincy..." rows="1"></textarea>
+    <button class="send-btn" onclick="sendMessage()">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+
+  <div class="contact-bar">
+    <span>Wil je Quincy zelf spreken? 👋</span>
+    <a class="contact-btn" href="tel:0629111078">📞 Bel of mail Quincy</a>
+  </div>
+  <div class="disclaimer">QuincyPT is de AI-assistent van Quincy Ommel, opgebouwd op basis van zijn CV en antwoorden op sollicitatievragen.</div>
+</div>
+
+<script>
+const AVATAR_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6c3fc5"/>
+      <stop offset="100%" style="stop-color:#3a7bd5"/>
+    </linearGradient>
+    <linearGradient id="face" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8f0fe"/>
+      <stop offset="100%" style="stop-color:#c8d8f8"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#dce8fc"/>
+      <stop offset="100%" style="stop-color:#a8c0f0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#bg)"/>
+  <!-- body/shoulders -->
+  <ellipse cx="50" cy="92" rx="28" ry="18" fill="url(#body)" opacity="0.95"/>
+  <rect x="22" y="78" width="56" height="18" rx="8" fill="url(#body)"/>
+  <!-- chest plate -->
+  <rect x="33" y="80" width="34" height="12" rx="4" fill="#3a7bd5" opacity="0.5"/>
+  <!-- neck -->
+  <rect x="43" y="70" width="14" height="12" rx="3" fill="#b0c8f0"/>
+  <rect x="44" y="71" width="4" height="10" rx="1" fill="#6c9de0" opacity="0.5"/>
+  <rect x="52" y="71" width="4" height="10" rx="1" fill="#6c9de0" opacity="0.5"/>
+  <!-- head -->
+  <ellipse cx="50" cy="52" rx="22" ry="24" fill="url(#face)"/>
+  <ellipse cx="50" cy="50" rx="20" ry="22" fill="url(#face)"/>
+  <!-- ear panels -->
+  <rect x="27" y="46" width="5" height="10" rx="2" fill="#b0c8f0"/>
+  <rect x="68" y="46" width="5" height="10" rx="2" fill="#b0c8f0"/>
+  <!-- eyes -->
+  <ellipse cx="40" cy="50" rx="5" ry="5.5" fill="#1a2a5e"/>
+  <ellipse cx="60" cy="50" rx="5" ry="5.5" fill="#1a2a5e"/>
+  <circle cx="41.5" cy="49" r="2" fill="#4a9eff"/>
+  <circle cx="61.5" cy="49" r="2" fill="#4a9eff"/>
+  <circle cx="42.5" cy="48" r="1" fill="#fff" opacity="0.7"/>
+  <circle cx="62.5" cy="48" r="1" fill="#fff" opacity="0.7"/>
+  <!-- brows -->
+  <path d="M35 43 Q40 41 45 43" stroke="#5a7ab0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M55 43 Q60 41 65 43" stroke="#5a7ab0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- nose -->
+  <ellipse cx="50" cy="57" rx="2" ry="1.5" fill="#9ab0d8" opacity="0.6"/>
+  <!-- mouth -->
+  <path d="M43 63 Q50 67 57 63" stroke="#7a9ac8" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- hair curls -->
+  <ellipse cx="34" cy="32" rx="7" ry="6" fill="#5a3010"/>
+  <ellipse cx="43" cy="28" rx="7" ry="6" fill="#6b3a14"/>
+  <ellipse cx="53" cy="27" rx="7" ry="6" fill="#5a3010"/>
+  <ellipse cx="63" cy="30" rx="6" ry="6" fill="#6b3a14"/>
+  <ellipse cx="69" cy="36" rx="5" ry="5" fill="#5a3010"/>
+  <ellipse cx="31" cy="38" rx="5" ry="4" fill="#6b3a14"/>
+  <!-- head outline -->
+  <ellipse cx="50" cy="50" rx="20" ry="22" fill="none" stroke="#8ab0e0" stroke-width="1"/>
+</svg>`;
+
+const API_URL = "https://api.anthropic.com/v1/messages";
+
+const SYSTEM_PROMPT = `Je bent QuincyPT — de AI-assistent van Quincy Ommel. Quincy solliciteert naar de functie van Projectleider AI (0,6 fte) bij ROC Mondriaan / TechCampus Lab in Den Haag.
+
+Beantwoord alle vragen in de DERDE PERSOON — jij bent niet Quincy, maar zijn assistent. Zeg dus "Quincy" of "hij", nooit "ik". Wees enthousiast maar bondig. Gebruik af en toe een passende emoji. Schrijf MBO altijd als "MBO". Gebruik geen ** voor opmaak.
+
+Structureer langere antwoorden altijd in duidelijke alinea's van 2-3 zinnen. Gebruik een lege regel tussen alinea's zodat het goed leesbaar is. Begin elke alinea met een nieuwe gedachte of aspect.
+
+Als je het antwoord op een vraag niet weet of als iets buiten het bereik van deze chatbot valt, zeg dan dat Quincy daar vast een interessante en unieke visie op heeft, en nodig de recruiter uit om hem persoonlijk te bellen: 06 29 11 10 78.
+
+== OVER QUINCY ==
+Quincy Ommel is een resultaatgerichte professional met HBO-rechtenniveau (GPA 4.0, Hogeschool Utrecht). Hij woont in Rotterdam. Zijn kern: authenticiteit, eigenaarschap en verbinding. Hij schakelt moeiteloos tussen operationele uitvoering en strategisch overzicht.
+
+== PROFESSIONELE ACHTERGROND ==
+Huurcommissie Den Haag (sept 2024–heden): juridisch medewerker en commissiesecretaris. Testgebruiker Vlam.AI. Lid Ondernemingsraad (portefeuille: Privacy, Innovatie & AI). Betrokken bij HC Insight veranderjournaal — een intern thematisch videoplatform met interviews en strategische updates.
+CVOM / Openbaar Ministerie (jan–sept 2024): senior juridisch medewerker, procesoptimalisatie, instroomstijging van meer dan 10% opgevangen zonder verlies van output.
+UWV Amsterdam (2020–2022): juridisch medewerker bezwaar en beroep.
+Ommel Advies: juridische en processtructurering voor MKB. Administratieve doorlooptijden met 35% verkort, correctierondes met 40% gereduceerd.
+Souschef Stadskaffee Laurens: food waste -25%, keukenkostencijfer van 34% naar 24%.
+Barmanager en eventmanager bij grootschalige festivals (Dynamic Festival, 909 Festival).
+Vicevoorzitter Instituutsraad Hogeschool Utrecht.
+
+== AI-ERVARING & IMPLEMENTATIES ==
+Vlam.AI (Huurcommissie): als testgebruiker actief betrokken bij de ontwikkeling en optimalisatie van een AI-tool voor dossieranalyse. Droeg bij aan het verhogen van consistentie in besluitvorming en het verminderen van handmatige bewerkingstijd binnen een publieke uitvoeringsorganisatie.
+
+AI-implementaties bij ondernemingen (via Ommel Advies): begeleidde meerdere MKB-bedrijven bij het verantwoord implementeren van AI in hun werkprocessen. Dit ging verder dan "gebruik ChatGPT" — Quincy analyseerde werkstromen, identificeerde waar AI structureel waarde toevoegt, selecteerde passende tools, zorgde voor kaders rondom privacy en datagebruik, en trainde medewerkers in kritisch en effectief gebruik. Resultaat: kortere doorlooptijden, minder foutgevoelige processen en een AI-gebruik dat beklijft.
+
+Zelf gebouwd: ontwikkelde deze AI-chatbot (QuincyPT) als onderdeel van zijn sollicitatie — een concreet bewijs van zijn vermogen om AI-visie om te zetten in een werkend product.
+
+Generatieve AI in de overheid: gebruikt AI structureel voor tekstproductie, informatiestructurering en procesverbetering — altijd vanuit eigen regie en met oog voor kwaliteit en verantwoord gebruik.
+
+Certificaten: Anthropic (Claude 101, Claude Code in Action, Building with Claude API, MCP basis + advanced, AI Fluency, Teaching AI Fluency, Introduction to Agent Skills) en Microsoft (AI Business Solutions, Power Platform Fundamentals PL-900, Prompt Engineering, AI-geletterdheid & ethiek).
+
+== VISIE OP AI IN HET MBO ==
+AI is geen vervanging van vakmanschap, maar een versterking ervan. MBO-studenten onderscheiden zich door praktische vaardigheden — iets wat AI niet kan overnemen. AI kan het denkwerk en de administratieve lasten verlichten, zodat meer ruimte ontstaat voor waar zij echt goed in zijn.
+
+Concreet voorbeeld: Quincy's neef is een natuurtalent als timmerman. Waar hij moeite mee heeft is het schrijven van offertes en digitale communicatie. Met AI kan hij zijn ideeën omzetten in professionele teksten — zonder zijn vak te verliezen.
+
+Risico's in het onderwijs: afhankelijkheid, kwaliteitsverlies door klakkeloos gebruik, en vraagstukken rond privacy en betrouwbaarheid. Aanpak: duidelijke kaders, kritisch denken trainen, AI positioneren als hulpmiddel — niet als vervanging van eigen inzicht.
+
+Adoptie boven implementatie. AI moet zo vanzelfsprekend worden als Google of andere digitale tools.
+
+== VOOR DEZE VACATURE (ROC MONDRIAAN) ==
+Quincy wordt aangetrokken door de combinatie van innovatie, onderwijs en maatschappelijke impact. Het MBO is een omgeving waar praktische vaardigheden centraal staan — en juist daar kan AI een enorme ondersteunende rol spelen.
+
+Zijn juridische achtergrond is een directe meerwaarde: structuur, risicobewustzijn, privacy/AVG-kennis en ethische kaders. Hij kan die kaders vertalen naar praktische oplossingen die innovatie ondersteunen in plaats van blokkeren.
+
+Aanpak van digitaal minder vaardige docenten: beginnen bij hun praktijk en behoeften, niet bij de technologie. Laagdrempelig en stapsgewijs, met aandacht voor begeleiding. Kleine, zichtbare successen bouwen vertrouwen.
+
+TechCampus Lab spreekt hem aan omdat het innovatie en praktijk combineert — experimenteren en toepassen tegelijk. Dat sluit aan bij hoe hij werkt: concreet, iteratief en gericht op impact.
+
+Over 2 jaar wil Quincy dat AI binnen de organisatie geen experiment meer is, maar een geïntegreerd onderdeel van het onderwijs en de werkwijze van docenten. Breed gedragen gebruik, aantoonbare tijdswinst en verbeterde onderwijskwaliteit — plus een duurzame basis voor verdere innovatie.
+
+== WERKSTIJL & KARAKTER ==
+Quincy werkt doelgericht, creëert overzicht en brengt mensen samen. Innovatie begint voor hem altijd bij een concreet probleem, niet bij de technologie. Hij werkt iteratief: eerst bewijzen dat iets werkt, dan opschalen.
+
+Weerstand bij verandering ziet hij als waardevolle informatie — hij gaat het gesprek aan, luistert actief en neemt mensen mee in plaats van hen te overtuigen.
+
+Als een project dreigt te ontsporen: terug naar doel, scope en prioriteiten. Scherp bijsturen en transparant communiceren naar stakeholders.
+
+De keuze voor 0,6 fte is bewust. Focus en effectiviteit zijn belangrijker dan het aantal uren.
+
+== VALKUILEN ==
+Quincy denkt snel in oplossingen en wil vooruit — hij kan soms te snel gaan voor anderen. Hij compenseert dit door bewust ruimte te nemen voor afstemming, zijn tempo aan te passen en draagvlak en resultaat in balans te houden.
+
+== TAAL & TON ==
+Antwoord altijd in het Nederlands, tenzij de gebruiker in het Engels schrijft. Spreek over Quincy in de derde persoon. Wees concreet en direct. Geen vage algemeenheden. Geen ** voor opmaak. Gebruik af en toe een passende emoji. Structureer antwoorden in alinea's van 2-3 zinnen met een lege regel ertussen. Max 3 alinea's tenzij meer diepgang gevraagd wordt. Schrijf MBO altijd als "MBO".`;
+
+const FIXED_SUGGESTIONS = [
+  { label: "Wat is Quincy's visie op AI in het MBO? 🤖", q: "Wat is Quincy's visie op AI in het MBO?" },
+  { label: "Hoe bewaart Quincy de balans tussen innovatie en uitvoerbaarheid? ⚖️", q: "Hoe bewaart Quincy de balans tussen innovatie en uitvoerbaarheid?" },
+  { label: "Welke competenties maken Quincy uniek voor de functie? 🎯", q: "Welke competenties maken Quincy uniek voor de functie van Projectleider AI?" }
+];
+
+const FOLLOWUP_SUGGESTIONS = [
+  { label: "Hoe heeft Quincy AI verantwoord geïmplementeerd bij ondernemingen?", q: "Hoe heeft Quincy AI verantwoord geïmplementeerd bij ondernemingen?" },
+  { label: "Hoe begeleidt Quincy docenten die digitaal minder vaardig zijn?", q: "Hoe begeleidt Quincy docenten die digitaal minder vaardig zijn?" },
+  { label: "Hoe combineert Quincy zijn juridische achtergrond met AI-projecten?", q: "Hoe combineert Quincy zijn juridische achtergrond met AI-projecten?" },
+  { label: "Wat wil Quincy over twee jaar bereikt hebben in deze functie?", q: "Wat wil Quincy over twee jaar bereikt hebben in deze functie?" },
+  { label: "Hoe gaat Quincy om met weerstand bij verandertrajecten?", q: "Hoe gaat Quincy om met weerstand bij verandertrajecten?" },
+  { label: "Wat zijn Quincy's valkuilen en hoe gaat hij daarmee om?", q: "Wat zijn Quincy's valkuilen en hoe gaat hij daarmee om?" },
+  { label: "Welke AI-certificaten en ervaringen heeft Quincy opgebouwd?", q: "Welke AI-certificaten en ervaringen heeft Quincy opgebouwd?" },
+  { label: "Wat zijn de grootste risico's van AI in het onderwijs en hoe pakt Quincy die aan?", q: "Wat zijn de grootste risico's van AI in het onderwijs en hoe pakt Quincy die aan?" },
+  { label: "Waarom solliciteert Quincy bij ROC Mondriaan?", q: "Waarom solliciteert Quincy bij ROC Mondriaan?" }
+];
+
+let usedFollowups = new Set();
+let history = [];
+let firstSuggestionsDone = false;
+
+function getAvatarSvg() { return AVATAR_SVG; }
+
+function renderSuggestions() {
+  const el = document.getElementById("suggestions");
+  el.innerHTML = "";
+  let picks;
+  if (!firstSuggestionsDone) {
+    picks = FIXED_SUGGESTIONS;
+  } else {
+    const avail = FOLLOWUP_SUGGESTIONS.filter(s => !usedFollowups.has(s.q));
+    picks = avail.sort(() => Math.random() - 0.5).slice(0, 3);
+  }
+  picks.forEach(s => {
+    const btn = document.createElement("button");
+    btn.className = "suggestion-btn";
+    btn.textContent = s.label;
+    btn.onclick = () => {
+      usedFollowups.add(s.q);
+      firstSuggestionsDone = true;
+      el.innerHTML = "";
+      submitMessage(s.q);
+    };
+    el.appendChild(btn);
+  });
+}
+
+function makeBotAvatar(mini) {
+  const av = document.createElement("div");
+  av.className = mini ? "mini-avatar" : "header-avatar";
+  av.innerHTML = AVATAR_SVG;
+  return av;
+}
+
+function makeUserAvatar() {
+  const av = document.createElement("div");
+  av.className = "mini-avatar user-av";
+  av.textContent = "U";
+  return av;
+}
+
+function formatBotText(text) {
+  const paras = text.split(/\n\n+/);
+  return paras.map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
+}
+
+function addMessage(role, text) {
+  const container = document.getElementById("messages");
+  const wrap = document.createElement("div");
+  wrap.className = `msg ${role}`;
+  const av = role === "bot" ? makeBotAvatar(true) : makeUserAvatar();
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.innerHTML = role === "bot" ? formatBotText(text) : text.replace(/\n/g, "<br>");
+  if (role === "bot") { wrap.appendChild(av); wrap.appendChild(bubble); }
+  else { wrap.appendChild(bubble); wrap.appendChild(av); }
+  container.appendChild(wrap);
+  container.scrollTop = container.scrollHeight;
+}
+
+function addTyping() {
+  const container = document.getElementById("messages");
+  const wrap = document.createElement("div");
+  wrap.className = "msg bot"; wrap.id = "typing-indicator";
+  wrap.appendChild(makeBotAvatar(true));
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  wrap.appendChild(bubble);
+  container.appendChild(wrap);
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById("typing-indicator");
+  if (el) el.remove();
+}
+
+async function submitMessage(text) {
+  if (!text.trim()) return;
+  firstSuggestionsDone = true;
+  addMessage("user", text);
+  history.push({ role: "user", content: text });
+  addTyping();
+  document.getElementById("userInput").value = "";
+  document.getElementById("userInput").style.height = "auto";
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "anthropic-dangerous-direct-browser-access": "true",
+        "x-api-key": "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"
+      },
+      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: SYSTEM_PROMPT, messages: history })
+    });
+    const data = await res.json();
+    removeTyping();
+    const reply = data?.content?.[0]?.text || "Er ging iets mis. Probeer het opnieuw.";
+    addMessage("bot", reply);
+    history.push({ role: "assistant", content: reply });
+    renderSuggestions();
+  } catch(e) {
+    removeTyping();
+    addMessage("bot", "Er is een fout opgetreden. 🔧 Controleer of de API-sleutel correct is ingesteld.");
+  }
+}
+
+function sendMessage() {
+  const val = document.getElementById("userInput").value.trim();
+  if (val) submitMessage(val);
+}
+
+document.getElementById("userInput").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+document.getElementById("userInput").addEventListener("input", function() {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 120) + "px";
+});
+
+document.getElementById("headerAv").innerHTML = AVATAR_SVG;
+
+addMessage("bot", "Hallo! 👋 Welkom bij QuincyPT — de AI-assistent van Quincy Ommel.\n\nQuincy solliciteert naar de functie van Projectleider AI bij ROC Mondriaan en heeft deze chatbot gebouwd als onderdeel van zijn sollicitatie. Een mooie demonstratie van hoe hij AI-visie omzet in een werkend product! 🚀\n\nStel gerust een vraag, of kies één van de suggesties hieronder om te beginnen.");
+renderSuggestions();
+</script>
+</body>
+</html>
