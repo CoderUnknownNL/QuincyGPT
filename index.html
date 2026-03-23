@@ -271,7 +271,7 @@ const AVATAR_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg
   <ellipse cx="50" cy="50" rx="20" ry="22" fill="none" stroke="#8ab0e0" stroke-width="1"/>
 </svg>`;
 
-const API_URL = "https://api.anthropic.com/v1/messages";
+const API_URL = "/api/chat";
 
 const SYSTEM_PROMPT = `Je bent QuincyPT — de AI-assistent van Quincy Ommel. Quincy solliciteert naar de functie van Projectleider AI (0,6 fte) bij ROC Mondriaan / TechCampus Lab in Den Haag.
 
@@ -451,7 +451,6 @@ async function submitMessage(text) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "anthropic-dangerous-direct-browser-access": "true",
         "x-api-key": "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"
       },
       body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: SYSTEM_PROMPT, messages: history })
